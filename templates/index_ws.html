@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real-Time Prediction</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .highlight {
+            animation: highlightRow 1s ease-in-out;
+        }
+        @keyframes highlightRow {
+            from {
+                background-color: #d4edda;
+            }
+            to {
+                background-color: transparent;
+            }
+        }
+        /* Màn hình cuộn cho bảng */
+        #results-container {
+            max-height: 400px; /* Chiều cao cố định */
+            overflow-y: auto;  /* Cho phép cuộn dọc */
+            margin-top: 20px;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <h1 class="text-center mb-4">Real-Time CSV Prediction</h1>
+        <form id="upload-form" class="mb-4" enctype="multipart/form-data">
+            <div class="mb-3">
+                <label for="file" class="form-label">Choose CSV File</label>
+                <input type="file" class="form-control" id="file" name="file" accept=".csv" required>
+            </div>
+
+            <div class="mb-3">
+                <label for="attack_type" class="form-label">Select Attack Type</label>
+                <select name="attack_type" id="attack_type" class="form-select" required>
+                    <option value="SYN">SYN</option>
+                    <option value="HTTP">HTTP</option>
+                    <option value="ACK">ACK</option>
+                    <option value="UDP">UDP</option>
+                    <option value="ARP">ARP</option>
+                    <option value="SP">SP</option>
+                    <option value="BF">BF</option>
+                </select>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Submit</button>
+        </form>
+
+        <div id="results-section" style="display: none;">
+            <h2 class="mb-4">Results:</h2>
+            <div id="results-container">
+                <table id="results-table" class="table table-bordered table-hover">
+                    <thead id="results-header" class="table-dark">
+                        <!-- Headers will be dynamically added -->
+                    </thead>
+                    <tbody id="results-body">
+                        <!-- Rows will be dynamically added -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('upload-form').addEventListener('submit', async (event) => {
+            event.preventDefault();
+
+            const formData = new FormData();
+            const fileInput = document.getElementById('file');
+            const attackTypeSelect = document.getElementById('attack_type');
+            if (!fileInput.files.length) {
+                alert('Please select a file!');
+                return;
+            }
+
+            // Add file to FormData
+            formData.append('file', fileInput.files[0]);
+            formData.append('attack_type', attackTypeSelect.value)
+
+            try {
+                const response = await fetch('/predict', { method: 'POST', body: formData });
+
+                if (!response.ok) {
+                    throw new Error('Failed to fetch predictions');
+                }
+
+                const data = await response.json();
+
+                // Prepare table
+                const resultsSection = document.getElementById('results-section');
+                const resultsHeader = document.getElementById('results-header');
+                const resultsBody = document.getElementById('results-body');
+                resultsHeader.innerHTML = '';
+                resultsBody.innerHTML = '';
+
+                // Add table headers
+                const headerRow = document.createElement('tr');
+                data.columns.forEach(column => {
+                    const th = document.createElement('th');
+                    th.textContent = column;
+                    headerRow.appendChild(th);
+                });
+                // Add Timestamp and Prediction columns
+                headerRow.appendChild(document.createElement('th')).textContent = 'Timestamp';
+                headerRow.appendChild(document.createElement('th')).textContent = 'Prediction';
+                resultsHeader.appendChild(headerRow);
+                resultsSection.style.display = 'block';
+
+                // Add rows with real-time effects
+                const delay = 800; // Delay for rows appearance (ms)
+                for (let i = 0; i < data.rows.length; i++) {
+                    const row = data.rows[i];
+                    await new Promise(resolve => setTimeout(resolve, delay));
+
+                    const tr = document.createElement('tr');
+                    tr.classList.add('highlight'); // Highlight effect
+
+                    // Add feature values
+                    row.row.forEach(value => {
+                        const td = document.createElement('td');
+                        td.textContent = value;
+                        tr.appendChild(td);
+                    });
+
+                    // Add Timestamp (from the CSV data)
+                    const timestampTd = document.createElement('td');
+                    timestampTd.textContent = row.timestamp; // Assuming "timestamp" is included in backend data
+                    tr.appendChild(timestampTd);
+
+                    // Add Prediction
+                    const predictionTd = document.createElement('td');
+                    predictionTd.textContent = row.prediction;
+                    tr.appendChild(predictionTd);
+
+                    resultsBody.appendChild(tr);
+
+                    // Tự động cuộn xuống
+                    const container = document.getElementById('results-container');
+                    container.scrollTop = container.scrollHeight; // Cuộn đến cuối bảng
+                }
+
+
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        });
+    </script>
+</body>
+</html>
+
+
