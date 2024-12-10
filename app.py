@@ -24,8 +24,6 @@ def upload_file():
     file = request.files['file']
     attack_type = request.form.get('attack_type')
 
-    file = request.files['file']
-
     if file.filename == '':
         return "No selected file", 400
 
@@ -38,27 +36,24 @@ def upload_file():
         df = pd.read_csv(file_path)
 
         # Đường dẫn tới file model
-        model_path = "models/NB_BF_0_model.pkl"
+        model_path = f"models/NB_{attack_type}_model.pkl"
 
         # Load mô hình
         with open(model_path, 'rb') as file:
             model = pickle.load(file)
 
         # Đường dẫn tới file dữ liệu mới
-        data_path = "./csv_flow/Telnet Brute Force_test.csv"
 
-        # Đọc dữ liệu
-        file_df = pd.read_csv(data_path)
 
         with open('GA_output_ET.json', 'r') as fp:
             feature_list = json.load(fp)
 
         # Xử lý dữ liệu: Chọn các cột đặc trưng đã dùng khi train
-        features = feature_list["BF"]
+        features = feature_list[attack_type]
 
         features.remove('Label')
 
-        X_new = file_df[features]
+        X_new = df[features]
 
         # Xử lý giá trị thiếu (nếu có)
         X_new = X_new.fillna(0)
@@ -76,7 +71,7 @@ def upload_file():
         # print("Probabilities:", probabilities)
 
         # Tạo DataFrame chứa kết quả
-        output_df = file_df[features].copy()  # Sao chép dữ liệu gốc nếu cần lưu thông tin ban đầu
+        output_df = df[features].copy()  # Sao chép dữ liệu gốc nếu cần lưu thông tin ban đầu
         output_df['Label'] = predictions
         # Xử lý DataFrame (ví dụ: hiển thị thông tin)
         return render_template('result.html',attack_type=attack_type, table_html=output_df.to_html(classes='table table-bordered table-striped'))
