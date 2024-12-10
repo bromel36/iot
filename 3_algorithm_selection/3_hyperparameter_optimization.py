@@ -34,7 +34,7 @@ from scipy import sparse
 # %%
 import json
 
-with open('GA_output_ET.json', 'r') as fp:
+with open('../GA_output_ET.json', 'r') as fp:
     feature_list = json.load(fp)
 
 # %%

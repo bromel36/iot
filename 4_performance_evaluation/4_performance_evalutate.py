@@ -428,7 +428,7 @@ def ML(loop1, loop2, output_csv1, cols, dname, sw):
 # %%
 import json
 
-with open('GA_output_ET.json', 'r') as fp:
+with open('../GA_output_ET.json', 'r') as fp:
     feature_list = json.load(fp)
 
 # %% [markdown]

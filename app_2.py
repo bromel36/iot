@@ -2,9 +2,19 @@ from flask import Flask, request, render_template, jsonify
 import pandas as pd
 import pickle
 import json
+from enum import Enum
+
+
 app = Flask(__name__)
 
-
+class DDoSType(Enum):
+    SYN = "SYN Flood"
+    HTTP = "HTTP Flood"
+    ACK = "ACK Flood"
+    UDP = "UDP Flood"
+    ARP = "ARP Spoofing"
+    SP = "Port Scanning"
+    BF = "Brute Force"
 
 with open('GA_output_ET.json', 'r') as fp:
     feature_list = json.load(fp)
@@ -13,7 +23,7 @@ with open('GA_output_ET.json', 'r') as fp:
 
 @app.route('/')
 def index():
-    return render_template('index_ws.html')  # Giao diện upload file
+    return render_template('index_ws.html')
 
 @app.route('/predict', methods=['POST'])
 def predict():
@@ -27,21 +37,25 @@ def predict():
         model = pickle.load(file)
 
     features = feature_list[attack_type]
-    features.remove('Label')
+    if 'Label' in features:
+        features.remove('Label')
 
 
-    # Trích xuất đặc trưng và thêm cột Timestamp
-    df = data[features]  # `features` là danh sách cột cần dự đoán
-    timestamps = data["Timestamp"]  # Giả sử file CSV có cột "Timestamp"
+    df = data[features]
+    timestamps = data["Timestamp"]
 
     # Dự đoán
     predictions = model.predict(df.values).tolist()
 
     # Tạo kết quả
     results = {
-        "columns": features,  # Tên các cột đặc trưng
+        "columns": features,
         "rows": [
-            {"row": row.tolist(), "timestamp": timestamps.iloc[i], "prediction": predictions[i]}
+            {
+                "row": row.tolist(),
+                "timestamp": timestamps.iloc[i],
+                "prediction": DDoSType[attack_type].value if predictions[i] == 1 else "Benign"
+            }
             for i, row in enumerate(df.values)
         ]
     }

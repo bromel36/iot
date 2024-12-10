@@ -480,7 +480,7 @@ GA_input = {'ACK': ['ACK Flag Cnt',
                     'Subflow Bwd Byts', 'Subflow Fwd Byts', 'TotLen Bwd Pkts', 'TotLen Fwd Pkts', 'Label']}
 
 # import json
-with open('GA_input.json', 'w') as fp:
+with open('../GA_input.json', 'w') as fp:
     json.dump(GA_input, fp)
 
 print("============================================read ga section====================================")
@@ -554,5 +554,5 @@ for attack in results["Attack"].unique():
     plt.savefig(graph_name, bbox_inches='tight', format="pdf")  # , dpi=400)
 
     # plt.show()
-with open('GA_input.json', 'w') as fp:
+with open('../GA_input.json', 'w') as fp:
     json.dump(GA_input, fp)
